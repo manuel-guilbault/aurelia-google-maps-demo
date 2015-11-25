@@ -1,0 +1,39 @@
+﻿<template>
+  <style type="text/css">
+    map {
+      display: block;
+      width: 400px;
+      height: 400px;
+    }
+  </style>
+
+  <section>
+    <map center.bind="center" zoom.bind="zoom" bounds.bind="bounds">
+      <marker position.bind="myPosition" 
+              title="My position" 
+              draggable.one-time="false"
+              visible.bind="!!myPosition"
+              icon="http://steeplemedia.com/images/markers/markerBlue.png">
+        <info-window>
+          <strong>This is where you are!</strong>
+        </info-window>
+      </marker>
+      <marker repeat.for="place of places"
+              ref="marker"
+              position.bind="place.position"
+              title.bind="place.name"
+              draggable.one-time="false">
+        <info-window>
+          This is ${place.name}!
+        </info-window>
+      </marker>
+    </map>
+    <p>Center: ${center | latLng:6}</p>
+    <p>Zoom: ${zoom} <a href="#" click.delegate="zoomIn()">+</a> <a href="#" click.delegate="zoomOut()">-</a></p>
+    <p>Bounds: ${bounds | latLngBounds:6}</p>
+    <p>My position: ${myPosition | latLng:6} <a href="#" click.delegate="goTo(myPosition)">Go</a></p>
+    <ul>
+      <li repeat.for="place of places" title.bind="place.name">${place.name} <a href="#" click.delegate="$parent.goTo(place.position)">Go</a></li>
+    </ul>
+  </section>
+</template>

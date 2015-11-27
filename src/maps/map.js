@@ -12,14 +12,14 @@ var nextMapId = 1;
 
 function normalizeMapElement(element) {
   if (!element.id) {
-    element.id = "map-" + nextMapId++;
+    element.id = "aurelia-google-map.map-" + nextMapId++;
   }
   return element;
 }
 
 @customElement('map')
-@inlineView('<template><content></content></template>')
-@inject(Container)
+@inlineView('<template><div><content></content></div></template>')
+@inject(Container, Element)
 @bindable({ name: 'panCenter', defaultValue: true })
 @bindable({ name: 'center', defaultValue: new google.maps.LatLng(0, 0), defaultBindingMode: bindingMode.twoWay })
 @bindable({ name: 'panBounds', defaultValue: true })
@@ -27,43 +27,43 @@ function normalizeMapElement(element) {
 @bindable({ name: 'zoom', defaultValue: 8, defaultBindingMode: bindingMode.twoWay })
 @bindable({ name: 'mapTypeId', attribute: 'map-type', defaultValue: google.maps.MapTypeId.ROADMAP })
 export class Map {
-  constructor(container) {
+  constructor(container, element) {
     this.container = container;
-    this.element = normalizeMapElement(container.get(Element));
+    this.element = normalizeMapElement(element);
     this.eventListeners = new EventListeners();
   }
 
-  centerChanged(newCenter) {
+  centerChanged(value) {
     if (!this.ignoreNextCenterChanged) {
       if (this.panCenter) {
-        this.map.panTo(newCenter);
+        this.map.panTo(value);
       } else {
-        this.map.setCenter(newCenter);
+        this.map.setCenter(value);
       }
     }
     this.ignoreNextCenterChanged = false;
   }
 
-  boundsChanged(bounds) {
+  boundsChanged(value) {
     if (!this.ignoreNextBoundsChanged) {
       if (this.panBounds) {
-        this.map.panToBounds(this.bounds);
+        this.map.panToBounds(value);
       } else {
-        this.map.fitBounds(this.bounds);
+        this.map.fitBounds(value);
       }
     }
     this.ignoreNextBoundsChanged = false;
   }
 
-  zoomChanged(newZoom) {
+  zoomChanged(value) {
     if (!this.ignoreNextZoomChanged) {
-      this.map.setZoom(newZoom);
+      this.map.setZoom(value);
     }
     this.ignoreNextZoomChanged = false;
   }
 
-  mapTypeIdChanged(newMapTypeId) {
-    this.map.setMapTypeId(newMapTypeId);
+  mapTypeIdChanged(value) {
+    this.map.setMapTypeId(value);
   }
 
   bind(bindingContext) {
@@ -87,8 +87,6 @@ export class Map {
       zoom: this.zoom,
       mapTypeId: this.mapTypeId
     });
-
-    this.eventListeners.disposeAll();
 
     this.eventListeners.listen(map, "center_changed", () => {
       this.ignoreNextCenterChanged = true;

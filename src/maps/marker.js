@@ -9,7 +9,7 @@
 import {EventListeners} from './event-listeners';
 
 @customElement('marker')
-@inlineView('<template><content></content></template>')
+@inlineView('<template><div><content></content></div></template>')
 @inject(Container)
 @bindable({ name: 'position', defaultBindingMode: bindingMode.twoWay })
 @bindable({ name: 'title', defaultValue: '' })
@@ -76,8 +76,6 @@ export class Marker {
       icon: this.icon
     });
         
-    this.eventListeners.disposeAll();
-
     this.eventListeners.listen(marker, 'position_changed', () => {
       this.ignoreNextPositionChanged = true;
       this.position = marker.getPosition();
@@ -93,6 +91,7 @@ export class Marker {
 
   destroyMarker() {
     this.eventListeners.disposeAll();
+    this.marker.setMap(null);
     this.marker = null;
   }
 }

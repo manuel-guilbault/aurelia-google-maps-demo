@@ -11,7 +11,7 @@
 
   dispose(registration) {
     var index = this.registrations.indexOf(registration);
-    if (index === -1) {
+    if (index < 0) {
       return false;
     }
 

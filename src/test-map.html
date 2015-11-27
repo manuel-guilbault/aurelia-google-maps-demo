@@ -1,5 +1,8 @@
 ﻿<template>
   <style type="text/css">
+    section {
+      margin-top: 15px;
+    }
     map {
       display: block;
       width: 400px;
@@ -7,33 +10,51 @@
     }
   </style>
 
-  <section>
-    <map center.bind="center" zoom.bind="zoom" bounds.bind="bounds">
-      <marker position.bind="myPosition" 
-              title="My position" 
-              draggable.one-time="false"
-              visible.bind="!!myPosition"
-              icon="http://steeplemedia.com/images/markers/markerBlue.png">
-        <info-window>
-          <strong>This is where you are!</strong>
-        </info-window>
-      </marker>
-      <marker repeat.for="place of places"
-              ref="marker"
-              position.bind="place.position"
-              title.bind="place.name"
-              draggable.one-time="false">
-        <info-window>
-          This is ${place.name}!
-        </info-window>
-      </marker>
-    </map>
-    <p>Center: ${center | latLng:6}</p>
-    <p>Zoom: ${zoom} <a href="#" click.delegate="zoomIn()">+</a> <a href="#" click.delegate="zoomOut()">-</a></p>
-    <p>Bounds: ${bounds | latLngBounds:6}</p>
-    <p>My position: ${myPosition | latLng:6} <a href="#" click.delegate="goTo(myPosition)">Go</a></p>
-    <ul>
-      <li repeat.for="place of places" title.bind="place.name">${place.name} <a href="#" click.delegate="$parent.goTo(place.position)">Go</a></li>
-    </ul>
+  <section class="container-fluid">
+    <div class="row">
+      <div class="col-md-6">
+        <map center.bind="center" zoom.bind="zoom" bounds.bind="bounds">
+          <marker position.bind="currentPosition" 
+                  title="Your position" 
+                  draggable.one-time="false"
+                  visible.bind="!!currentPosition"
+                  icon="assets/img/markerBlue.png">
+            <info-window>
+              <strong>This is where you are</strong>
+            </info-window>
+          </marker>
+          <marker repeat.for="place of places"
+                  ref="marker"
+                  position.bind="place.position"
+                  title.bind="place.name"
+                  draggable.one-time="true">
+            <info-window>
+              ${place.name}
+            </info-window>
+          </marker>
+        </map>
+        <p>Center: ${center | latLng:6}</p>
+        <p>Zoom: ${zoom} <a href="#" click.delegate="zoomIn()">+</a> <a href="#" click.delegate="zoomOut()">-</a></p>
+        <p>Bounds: ${bounds | latLngBounds:6}</p>
+        <p show.bind="currentPosition">My position: ${myPosition | latLng:6} <a href="#" click.delegate="goTo(currentPosition)">Go</a></p>
+      </div>
+      <div class="col-md-6">
+        <button type="button" class="btn btn-default" click.delegate="addPlace()" title="Add a place">
+          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+        </button>
+        <ul class="list-group">
+          <li class="list-group-item" repeat.for="place of places">
+            <button type="button" class="btn" click.delegate="goTo(place.position)" title="View on map">
+              <span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn" click.delegate="removePlace(place)" title="Remove">
+              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+            </button>
+            <input type="text" value.bind="place.name"/>
+            ${place.position | latLng:6}
+          </li>
+        </ul>
+      </div>
+    </div>
   </section>
 </template>

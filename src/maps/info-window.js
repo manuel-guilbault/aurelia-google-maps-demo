@@ -52,7 +52,13 @@ export class InfoWindow {
   }
 
   get marker() {
-    return this.container.get(google.maps.Marker);
+    if (this.container.hasResolver(google.maps.Marker, true)) {
+      return this.container.get(google.maps.Marker);
+    }
+    if (this.container.hasResolver('info-window-anchor', true)) {
+      return this.container.get('info-window-anchor');
+    }
+    throw new Error('');
   }
 
   bind(bindingContext, overrideContext) {

@@ -24,7 +24,10 @@ export class Marker {
   }
 
   get map() {
-    return this.container.get(google.maps.Map);
+    if (this.container.hasResolver(google.maps.Map, true)) {
+      return this.container.get(google.maps.Map);
+    }
+    throw new Error('marker elements must be placed inside a map element');
   }
 
   positionChanged(value) {
@@ -56,7 +59,6 @@ export class Marker {
   attached() {
     this.marker = this.createMarker();
     this.container.registerInstance(google.maps.Marker, this.marker);
-    this.container.registerInstance('info-window-anchor', this.marker);
   }
 
   detached() {

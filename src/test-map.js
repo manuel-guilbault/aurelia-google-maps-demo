@@ -51,4 +51,8 @@ export class TestMap {
       this.places.splice(index, 1);
     }
   }
+  
+  createPosition(lat, lnt) {
+    return new google.maps.LatLng(lat, lnt)
+  }
 }

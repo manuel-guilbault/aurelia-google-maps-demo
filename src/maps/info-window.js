@@ -3,8 +3,6 @@
   customElement, 
   noView,
   processContent,
-  bindable, 
-  bindingMode, 
   Container,
   ViewCompiler,
   ViewResources
@@ -49,28 +47,16 @@ google.maps.event.addListener(infoWindow, 'closeclick', currentViewController.de
 @customElement('info-window')
 @noView()
 @processContent(false)
-@inject(Element, ViewCompiler, ViewResources, Container)
+@inject(Element, ViewCompiler, ViewResources, google.maps.Map, google.maps.Marker, Container)
 export class InfoWindow {
-  constructor(element, compiler, resources, container) {
+  constructor(element, compiler, resources, map, marker, container) {
     this.contentFactory = compileContent(element, compiler, resources);
     this.container = container;
     this.contentView = null;
     this.content = null;
+    this.map = map;
+    this.marker = marker;
     this.eventListeners = new EventListeners();
-  }
-
-  get map() {
-    if (this.container.hasResolver(google.maps.Map, true)) {
-      return this.container.get(google.maps.Map);
-    }
-    throw new Error('inf-window elements must be placed inside a map element');
-  }
-
-  get marker() {
-    if (this.container.hasResolver(google.maps.Marker, true)) {
-      return this.container.get(google.maps.Marker);
-    }
-    throw new Error('inf-window elements must be placed inside a marker element');
   }
 
   bind(bindingContext, overrideContext) {

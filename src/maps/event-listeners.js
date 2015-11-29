@@ -2,10 +2,14 @@
   constructor() {
     this.registrations = [];
   }
+  
+  add(registration) {
+    this.registrations.push(registration);
+  }
 
   listen(instance, eventName, listener) {
     var registration = google.maps.event.addListener(instance, eventName, listener);
-    this.registrations.push(registration);
+    this.add(registration);
     return registration;
   }
 
@@ -16,7 +20,7 @@
     }
 
     google.maps.event.removeListener(this.registrations[index]);
-    this.registration.splice(index, 1);
+    this.registrations.splice(index, 1);
     return true;
   }
 

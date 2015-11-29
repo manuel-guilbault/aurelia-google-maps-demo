@@ -23,15 +23,17 @@
               <strong>This is where you are</strong>
             </info-window>
           </marker>
-          <marker repeat.for="place of places"
-                  ref="marker"
-                  position.bind="place.position"
-                  title.bind="place.name"
-                  draggable.one-time="true">
-            <info-window>
-              ${place.name}
-            </info-window>
-          </marker>
+          <marker-clusterer>
+            <marker repeat.for="place of places"
+                    ref="marker"
+                    position.bind="place.position"
+                    title.bind="place.name"
+                    draggable.one-time="true">
+              <info-window>
+                ${place.name}
+              </info-window>
+            </marker>
+          </marker-clusterer>
         </map>
         <p>Center: ${center | latLng:6}</p>
         <p>Zoom: ${zoom} <a href="#" click.delegate="zoomIn()">+</a> <a href="#" click.delegate="zoomOut()">-</a></p>

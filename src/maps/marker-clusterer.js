@@ -1,20 +1,17 @@
-import MarkerClusterer from 'googlemaps/js-marker-clusterer';
+import {MarkerClusterer} from 'googlemaps/js-marker-clusterer';
 import {
   inject, 
-  customElement,
   inlineView, 
   bindable, 
   bindingMode,
   TaskQueue,
   Container
 } from 'aurelia-framework';
-import {EventAggregator} from 'aurelia-event-aggregator';
-import {MarkerAdded, MarkerRemoved} from './marker';
+import {MarkerContainer} from './marker-container';
 import {EventListeners} from './event-listeners';
 
-@customElement('marker-clusterer')
 @inlineView('<template><div><content></content></div></template>')
-@inject(EventAggregator, TaskQueue, Container)
+@inject(TaskQueue, google.maps.Map, MarkerContainer, Container)
 export class MarkerClustererCustomElement {
   
   @bindable({ defaultBindingMode: bindingMode.oneTime }) ignoreHidden = true;
@@ -23,18 +20,19 @@ export class MarkerClustererCustomElement {
   @bindable styles = [];
   @bindable({ defaultBindingMode: bindingMode.oneTime }) calculator;
   
-  constructor(eventAggregator, taskQueue, container) {
-    this.eventAggregator = eventAggregator;
+  constructor(taskQueue, map, markerContainer, container) {
     this.taskQueue = taskQueue;
     this.container = container;
+    
     this.eventListeners = new EventListeners();
-  }
-  
-  get map() {
-    if (this.container.hasResolver(google.maps.Map, true)) {
-      return this.container.get(google.maps.Map);
-    }
-    throw new Error('marker elements must be placed inside a map element');
+    this.visibleChangedSubscriptionByMarker = new Map();
+    
+    this.clusterer = this.createClusterer(map);
+    
+    container.registerInstance(
+      MarkerContainer, 
+      new MarkerContainerDecorator(markerContainer, this)
+    );
   }
   
   gridSizeChanged(value) {
@@ -50,35 +48,9 @@ export class MarkerClustererCustomElement {
     this.clusterer.resetViewport();
     this.clusterer.redraw();
   }
-
-  bind(bindingContext) {
-  }
   
-  attached() {
-    this.clusterer = this.createClusterer();
-    
-    this.markerAddedSubscription = this.eventAggregator.subscribe(MarkerAdded, e => {
-      this.addMarker(e.marker);
-    });
-    this.markerRemovedSubscription = this.eventAggregator.subscribe(MarkerRemoved, e => {
-      this.removeMarker(e.marker);
-    });
-  }
-
-  detached() {
-    this.markerAddedSubscription.dispose();
-    this.markerAddedSubscription = null;
-    this.markerRemovedSubscription.dispose();
-    this.markerRemovedSubscription = null;
-    
-    this.destroyMarker();
-  }
-
-  unbind() {
-  }
-  
-  createClusterer() {
-    return new MarkerClusterer(this.map, [], {
+  createClusterer(map) {
+    return new MarkerClusterer(map, [], {
       ignoreHidden: this.ignoreHidden,
       gridSize: this.gridSize,
       maxZoom: this.maxZoom,
@@ -89,8 +61,7 @@ export class MarkerClustererCustomElement {
   
   addMarker(marker) {
     this.clusterer.addMarker(marker);
-    //TODO register subscription for specific marker
-    this.eventListeners.listen(marker, 'visible_changed', () => {
+    let subscription = this.eventListeners.listen(marker, 'visible_changed', () => {
       if (!this.needsRepaint) {
         this.needsRepaint = true;
         this.taskQueue.queueMicroTask(() => {
@@ -99,10 +70,31 @@ export class MarkerClustererCustomElement {
         });
       }
     });
+    this.visibleChangedSubscriptionByMarker.set(marker, subscription);
   }
   
   removeMarker(marker) {
-    //TODO unregister subscription for specific marker on 'visible_changed'
+    let subscription = this.visibleChangedSubscriptionByMarker.get(marker);
+    this.eventListeners.dispose(subscription);
     this.clusterer.removeMarker(marker);
+  }
+}
+
+class MarkerContainerDecorator extends MarkerContainer {
+  
+  constructor(decorated, clusterer) {
+    super();
+    this.decorated = decorated;
+    this.clusterer = clusterer;
+  }
+  
+  addMarker(marker) {
+    this.decorated.addMarker(marker);
+    this.clusterer.addMarker(marker);
+  }
+  
+  removeMarker(marker) {
+    this.clusterer.removeMarker(marker);
+    this.decorated.removeMarker(marker);
   }
 }

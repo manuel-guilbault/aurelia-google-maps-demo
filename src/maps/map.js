@@ -6,35 +6,42 @@
   bindingMode, 
   Container
 } from 'aurelia-framework';
+import {MarkerContainer} from './marker-container';
 import {EventListeners} from './event-listeners';
 
-var nextMapId = 1;
-
-function normalizeMapElement(element) {
-  if (!element.id) {
-    element.id = "aurelia-google-map.map-" + nextMapId++;
+let elementNormalizer = {
+  nextMapId: 1,
+  
+  normalize: function (element) {
+    if (!element.id) {
+      element.id = "aurelia-google-map.map-" + elementNormalizer.nextMapId++;
+    }
+    return element;
   }
-  return element;
-}
+};
 
 @customElement('map')
 @inlineView('<template><div><content></content></div></template>')
 @inject(Container, Element)
-@bindable({ name: 'panCenter', defaultValue: true })
-@bindable({ name: 'center', defaultValue: new google.maps.LatLng(0, 0), defaultBindingMode: bindingMode.twoWay })
-@bindable({ name: 'panBounds', defaultValue: true })
-@bindable({ name: 'bounds', defaultBindingMode: bindingMode.twoWay })
-@bindable({ name: 'zoom', defaultValue: 8, defaultBindingMode: bindingMode.twoWay })
-@bindable({ name: 'mapTypeId', attribute: 'map-type', defaultValue: google.maps.MapTypeId.ROADMAP })
 export class Map {
+  
+  @bindable panCenter = true;
+  @bindable({ defaultBindingMode: bindingMode.twoWay }) center = new google.maps.LatLng(0, 0); 
+  @bindable panBounds = true;
+  @bindable({ defaultBindingMode: bindingMode.twoWay }) bounds = null;
+  @bindable({ defaultBindingMode: bindingMode.twoWay }) zoom = 8;
+  @bindable({ attribute: 'map-type' }) mapTypeId = google.maps.MapTypeId.ROADMAP;
+  
   constructor(container, element) {
-    this.container = container;
-    this.element = normalizeMapElement(element);
+    this.element = elementNormalizer.normalize(element);
     this.eventListeners = new EventListeners();
+    this.map = this.createMap();
+    container.registerInstance(google.maps.Map, this.map);
+    container.registerInstance(MarkerContainer, new MapMarkerContainer(this.map));
   }
 
   centerChanged(value) {
-    if (!this.ignoreNextCenterChanged) {
+    if (!this.ignoreNextCenterChanged && value) {
       if (this.panCenter) {
         this.map.panTo(value);
       } else {
@@ -45,7 +52,7 @@ export class Map {
   }
 
   boundsChanged(value) {
-    if (!this.ignoreNextBoundsChanged) {
+    if (!this.ignoreNextBoundsChanged && value) {
       if (this.panBounds) {
         this.map.panToBounds(value);
       } else {
@@ -66,19 +73,10 @@ export class Map {
     this.map.setMapTypeId(value);
   }
 
-  bind(bindingContext) {
-  }
-
   attached() {
-    this.map = this.createMap();
-    this.container.registerInstance(google.maps.Map, this.map);
   }
 
   detached() {
-    this.destroyMap();
-  }
-
-  unbind() {
   }
 
   createMap() {
@@ -103,9 +101,20 @@ export class Map {
 
     return map;
   }
+}
 
-  destroyMap() {
-    this.eventListeners.disposeAll();
-    this.map = null;
+class MapMarkerContainer extends MarkerContainer {
+  
+  constructor(map) {
+    super();
+    this.map = map;
+  }
+  
+  addMarker(marker) {
+    marker.setMap(this.map);
+  }
+  
+  removeMarker(marker) {
+    marker.setMap(null);
   }
 }

@@ -6,11 +6,26 @@
   bindingMode, 
   Container
 } from 'aurelia-framework';
+import {EventAggregator} from 'aurelia-event-aggregator';
 import {EventListeners} from './event-listeners';
+
+export class MarkerAdded {
+  constructor(map, marker) {
+    this.map = map;
+    this.marker = marker;
+  }
+}
+
+export class MarkerRemoved {
+  constructor(map, marker) {
+    this.map = map;
+    this.marker = marker;
+  }
+} 
 
 @customElement('marker')
 @inlineView('<template><div><content></content></div></template>')
-@inject(Container)
+@inject(EventAggregator, Container)
 @bindable({ name: 'position', defaultBindingMode: bindingMode.twoWay })
 @bindable({ name: 'title', defaultValue: '' })
 @bindable({ name: 'visible', defaultValue: true })
@@ -18,7 +33,8 @@ import {EventListeners} from './event-listeners';
 @bindable({ name: 'icon' })
 @bindable({ name: 'click' })
 export class Marker {
-  constructor(container) {
+  constructor(eventAggregator, container) {
+    this.eventAggregator = eventAggregator;
     this.container = container;
     this.eventListeners = new EventListeners();
   }
@@ -59,9 +75,11 @@ export class Marker {
   attached() {
     this.marker = this.createMarker();
     this.container.registerInstance(google.maps.Marker, this.marker);
+    this.eventAggregator.publish(new MarkerAdded(this.marker));
   }
 
   detached() {
+    this.eventAggregator.publish(new MarkerRemoved(this.marker));
     this.destroyMarker();
   }
 
